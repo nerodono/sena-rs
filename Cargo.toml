@@ -1,0 +1,12 @@
+[package]
+name = "sena"
+version = "0.1.0"
+edition = "2021"
+
+[features]
+default = ["macros"]
+macros = ["dep:sena-macros"]
+
+[dependencies]
+sena-macros = { version = "0.1.0", path = "./sena-macros", optional = true }
+
