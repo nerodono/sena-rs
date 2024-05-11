@@ -8,4 +8,5 @@ default = ["tokio"]
 tokio = ["dep:tokio"]
 
 [dependencies]
+either = { version = "1.11.0", default-features = false }
 tokio = { version = "1.37.0", features = ["sync"], optional = true }

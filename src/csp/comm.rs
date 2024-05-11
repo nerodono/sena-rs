@@ -3,8 +3,23 @@ use std::future::Future;
 use super::message::Message;
 use crate::utils::captures::Captures;
 
+#[derive(Debug, Clone, Default, Copy, PartialEq, Eq, PartialOrd, Ord)]
+/// [`OutputTx`] that just drops any input data
+pub struct VoidTx;
+
+impl<T, E> OutputTx<T, E> for VoidTx {
+    fn send(&self, data: T) -> impl Future<Output = Result<(), E>> + Captures<&'_ Self> {
+        _ = data;
+        async move { Ok(()) }
+    }
+}
+
 pub trait Responder<R, E> {
     fn respond_with(self, with: R) -> impl Future<Output = Result<(), E>> + Send;
+}
+
+pub trait OutputTx<T, E>: Send {
+    fn send(&self, data: T) -> impl Future<Output = Result<(), E>> + Captures<&'_ Self>;
 }
 
 pub trait TxChan<T, E, R>: Send + Clone {
@@ -24,5 +39,8 @@ pub trait RxChan<T, E, R>: Send {
 
     fn recv(
         &mut self,
-    ) -> impl Future<Output = Result<Message<T, Self::Responder>, E>> + Send + Captures<&'_ mut Self>;
+    ) -> impl Future<Output = Result<Message<T, Self::Responder>, E>>
+           + Unpin
+           + Send
+           + Captures<&'_ mut Self>;
 }

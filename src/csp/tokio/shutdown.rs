@@ -1,35 +1,52 @@
-use std::{future::Future, sync::Arc};
+use std::future::Future;
 
-use tokio::sync::Notify;
+use tokio::sync::broadcast;
 
 use crate::{
     csp::shutdown::{ShutdownRx, ShutdownTx},
     utils::captures::Captures,
 };
 
-#[derive(Debug, Clone)]
-pub struct ShutTx(pub Arc<Notify>);
+#[derive(Debug, Clone, Copy)]
+pub struct SendError;
+
+#[derive(Debug, Clone, Copy)]
+pub struct ShutdownError;
 
 #[derive(Debug, Clone)]
-pub struct ShutRx(pub Arc<Notify>);
+pub struct ShutTx(pub broadcast::Sender<()>);
 
-impl<E> ShutdownTx<E> for ShutTx {
-    fn shutdown(self) -> impl Future<Output = Result<(), E>> + Send {
-        self.0.notify_waiters();
-        async move { Ok(()) }
+#[derive(Debug)]
+pub struct ShutRx(pub broadcast::Receiver<()>);
+
+impl Clone for ShutRx {
+    fn clone(&self) -> Self {
+        Self(self.0.resubscribe())
     }
 }
 
-impl<E> ShutdownRx<E> for ShutRx {
-    fn wait_shutdown(&self) -> impl Future<Output = Result<(), E>> + Send + Captures<&'_ Self> {
+impl<E: From<ShutdownError>> ShutdownRx<E> for ShutRx {
+    fn wait_shutdown(
+        &mut self,
+    ) -> impl Future<Output = Result<(), E>> + Unpin + Send + Captures<&'_ Self> {
+        let fut = self.0.recv();
+        Box::pin(async move {
+            fut.await.map_err(|_| ShutdownError)?;
+            Ok(())
+        })
+    }
+}
+
+impl<E: From<SendError>> ShutdownTx<E> for ShutTx {
+    fn shutdown(self) -> impl Future<Output = Result<(), E>> + Send {
         async move {
-            self.0.notified().await;
+            self.0.send(()).map_err(|_| SendError)?;
             Ok(())
         }
     }
 }
 
 pub fn make_pair() -> (ShutTx, ShutRx) {
-    let notify = Arc::new(Notify::new());
-    (ShutTx(Arc::clone(&notify)), ShutRx(notify))
+    let (tx, rx) = broadcast::channel(1);
+    (ShutTx(tx), ShutRx(rx))
 }

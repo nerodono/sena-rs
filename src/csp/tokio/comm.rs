@@ -5,7 +5,7 @@ use tokio::sync::{mpsc, oneshot};
 
 use crate::{
     csp::{
-        comm::{Responder, RxChan, TxChan},
+        comm::{OutputTx, Responder, RxChan, TxChan},
         message::Message,
     },
     utils::captures::Captures,
@@ -51,6 +51,31 @@ pub fn bounded<T, R>(cap: usize) -> (BoundedTx<T, R>, BoundedRx<T, R>) {
 impl<T, R> Clone for BoundedTx<T, R> {
     fn clone(&self) -> Self {
         Self(self.0.clone())
+    }
+}
+
+impl<T, E> OutputTx<T, E> for mpsc::UnboundedSender<T>
+where
+    T: Send,
+    E: From<mpsc::error::SendError<T>>,
+{
+    fn send(&self, data: T) -> impl Future<Output = Result<(), E>> + Captures<&'_ Self> {
+        async move {
+            mpsc::UnboundedSender::send(self, data)?;
+            Ok(())
+        }
+    }
+}
+impl<T, E> OutputTx<T, E> for mpsc::Sender<T>
+where
+    T: Send,
+    E: From<mpsc::error::SendError<T>>,
+{
+    fn send(&self, data: T) -> impl Future<Output = Result<(), E>> + Captures<&'_ Self> {
+        async move {
+            mpsc::Sender::send(self, data).await?;
+            Ok(())
+        }
     }
 }
 
