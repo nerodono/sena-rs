@@ -8,19 +8,19 @@ use crate::{
 };
 
 #[derive(Debug, Clone)]
-pub struct Tx(pub Arc<Notify>);
+pub struct ShutTx(pub Arc<Notify>);
 
 #[derive(Debug, Clone)]
-pub struct Rx(pub Arc<Notify>);
+pub struct ShutRx(pub Arc<Notify>);
 
-impl<E> ShutdownTx<E> for Tx {
+impl<E> ShutdownTx<E> for ShutTx {
     fn shutdown(self) -> impl Future<Output = Result<(), E>> + Send {
         self.0.notify_waiters();
         async move { Ok(()) }
     }
 }
 
-impl<E> ShutdownRx<E> for Rx {
+impl<E> ShutdownRx<E> for ShutRx {
     fn wait_shutdown(&self) -> impl Future<Output = Result<(), E>> + Send + Captures<&'_ Self> {
         async move {
             self.0.notified().await;
@@ -29,7 +29,7 @@ impl<E> ShutdownRx<E> for Rx {
     }
 }
 
-pub fn make_pair() -> (Tx, Rx) {
+pub fn make_pair() -> (ShutTx, ShutRx) {
     let notify = Arc::new(Notify::new());
-    (Tx(Arc::clone(&notify)), Rx(notify))
+    (ShutTx(Arc::clone(&notify)), ShutRx(notify))
 }
