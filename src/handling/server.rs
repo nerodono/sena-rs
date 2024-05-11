@@ -53,7 +53,7 @@ impl<H, X> Server<H, X> {
                 Either::Right(message) => {
                     let message = message?;
                     if let Some(output) = self.handle_message(message).await? {
-                        options.output_tx.send(output).await;
+                        options.output_tx.send(output).await?;
                     }
                 }
             }

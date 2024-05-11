@@ -91,7 +91,7 @@ where
         &mut self,
     ) -> impl Future<Output = Result<Message<T, Self::Responder>, E>> + Send + Captures<&'_ mut Self>
     {
-        async move {
+        Box::pin(async move {
             let Some(pkt) = self.0.recv().await else {
                 return Err(RecvError.into());
             };
@@ -102,7 +102,7 @@ where
             };
 
             Ok(message)
-        }
+        })
     }
 }
 

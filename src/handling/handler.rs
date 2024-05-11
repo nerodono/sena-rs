@@ -1,12 +1,13 @@
 use std::{future::Future, sync::Arc};
 
-use crate::utils::captures::Captures;
+use crate::{csp::comm::RxChan, utils::captures::Captures};
 
 use super::{
     erased::{ErasedHandler, TypeErasedHandler},
     map::{Fn1, Map},
     pipe::Pipe,
     seq::{Seq, SeqHandler},
+    server::Server,
 };
 
 /// Core of this library
@@ -32,6 +33,15 @@ pub trait Handler<T, E>: Send + Sync {
         Self: Sized,
     {
         Seq::new(current, self)
+    }
+
+    /// Creates server from that handler, for more, see docs for [`Server`] handler
+    fn into_server<X>(self, rx: X) -> Server<Self, X>
+    where
+        Self: Sized,
+        X: RxChan<T, E, Self::Output>,
+    {
+        Server { handler: self, rx }
     }
 
     /// Changes input of the handler into another type, to do that - it
