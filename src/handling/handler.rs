@@ -72,6 +72,21 @@ pub trait Handler<T, E>: Send + Sync {
     }
 }
 
+impl<T, E, O, F, Fut> Handler<T, E> for F
+where
+    F: Send + Sync + Fn(T) -> Fut,
+    Fut: Future<Output = Result<O, E>> + Send,
+{
+    type Output = O;
+
+    fn handle<'a>(
+        &'a self,
+        request: T,
+    ) -> impl Future<Output = Result<Self::Output, E>> + Send + Captures<(&'a Self, T)> {
+        self(request)
+    }
+}
+
 impl<T, E, H> Handler<T, E> for Arc<H>
 where
     H: Handler<T, E>,
