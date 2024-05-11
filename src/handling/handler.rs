@@ -3,7 +3,7 @@ use std::{future::Future, sync::Arc};
 use crate::utils::captures::Captures;
 
 use super::{
-    dynamic::{ErasedHandler, TypeErasedHandler},
+    erased::{ErasedHandler, TypeErasedHandler},
     map::{Fn1, Map},
     pipe::Pipe,
     seq::{Seq, SeqHandler},
