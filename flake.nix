@@ -1,5 +1,5 @@
 {
-  description = "sena crate";
+  description = "sena-rs";
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-unstable";
@@ -22,19 +22,29 @@
   }:
     flake-utils.lib.eachDefaultSystem(system:
       let
-        overlays = [(import rust-overlay)];
-        pkgs = import nixpkgs { inherit system overlays; };
+        overlays = [ (import rust-overlay) ];
+        pkgs = import nixpkgs {
+          inherit system overlays;
+        };
+        isDarwin = pkgs.lib.strings.hasSuffix "-darwin" system;
+        darwinOptions = pkgs.lib.optionalAttrs isDarwin {
+          nativeBuildInputs = with pkgs; [
+            darwin.apple_sdk.frameworks.SystemConfiguration
+          ];
+        };
+        options = darwinOptions;
 
         rust = pkgs.rust-bin.nightly.latest.default;
       in
       {
-        devShells.default = pkgs.mkShell {
+        devShells.default = pkgs.mkShell (options // {
           buildInputs = [
+            pkgs.just
             (rust.override {
               extensions = [ "rust-src" "rust-analyzer" ];
             })
           ];
-        };
+        });
       }
     );
 }

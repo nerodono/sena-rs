@@ -1,37 +1,44 @@
 use std::future::Future;
 
-use crate::context::Context;
+use crate::utils::captures::Captures;
 
 use super::handler::Handler;
 
-pub trait SeqHandler<Event, C>: Send {
-    fn handle<'a, H>(
+/// [`Handler`] aware of continuation. You can think of it
+/// as middleware trait.
+pub trait SeqHandler<T, E, H>: Send + Sync {
+    type Output;
+
+    fn process<'a, 'h>(
         &'a self,
-        ctx: Context<Event, C>,
-        next: H,
-    ) -> impl Future<Output = Result<H::Output, H::Error>> + Send + 'a
-    where
-        H: Handler<Event, C> + 'a;
+        request: T,
+        next: &'h H,
+    ) -> impl Future<Output = Result<Self::Output, E>> + Send + Captures<(&'a Self, &'h H)>;
 }
 
-#[derive(Debug, Clone)]
-pub struct Seq<Curr, Next> {
-    pub next: Next,
-    pub current: Curr,
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub struct Seq<C, N> {
+    pub current: C,
+    pub next: N,
 }
 
-impl<Event, C, Curr, Next> Handler<Event, C> for Seq<Curr, Next>
+impl<C, N> Seq<C, N> {
+    pub const fn new(current: C, next: N) -> Self {
+        Self { current, next }
+    }
+}
+
+impl<T, E, C, N> Handler<T, E> for Seq<C, N>
 where
-    for<'a> &'a Next: Handler<Event, C>,
-    Curr: SeqHandler<Event, C>,
+    C: SeqHandler<T, E, N>,
+    N: Handler<T, E>,
 {
-    type Output = <for<'a> &'a Next as Handler<Event, C>>::Output;
-    type Error = <for<'a> &'a Next as Handler<Event, C>>::Error;
+    type Output = C::Output;
 
-    fn handle(
-        &self,
-        ctx: Context<Event, C>,
-    ) -> impl Future<Output = Result<Self::Output, Self::Error>> + Send + '_ {
-        self.current.handle(ctx, &self.next)
+    fn handle<'a>(
+        &'a self,
+        request: T,
+    ) -> impl Future<Output = Result<Self::Output, E>> + Send + Captures<(&'a Self, T)> {
+        self.current.process(request, &self.next)
     }
 }

@@ -4,9 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [features]
-default = ["macros"]
-macros = ["dep:sena-macros"]
+default = ["tokio"]
+tokio = ["dep:tokio"]
 
 [dependencies]
-sena-macros = { version = "0.1.0", path = "./sena-macros", optional = true }
-
+tokio = { version = "1.37.0", features = ["sync"], optional = true }
