@@ -4,7 +4,10 @@ use std::mem;
 use tokio::sync::{mpsc, oneshot};
 
 use crate::{
-    csp::comm::{Message, Responder, RxChan, TxChan},
+    csp::{
+        comm::{Responder, RxChan, TxChan},
+        message::Message,
+    },
     utils::captures::Captures,
 };
 
@@ -40,8 +43,10 @@ impl<R> Drop for OneshotResponder<R> {
 pub struct BoundedTx<T, R>(mpsc::Sender<Pkt<T, R>>);
 pub struct BoundedRx<T, R>(mpsc::Receiver<Pkt<T, R>>);
 
-pub struct UnboundedTx<T, R>(mpsc::UnboundedSender<Pkt<T, R>>);
-pub struct UnboundedRx<T, R>(mpsc::UnboundedReceiver<Pkt<T, R>>);
+pub fn bounded<T, R>(cap: usize) -> (BoundedTx<T, R>, BoundedRx<T, R>) {
+    let (tx, rx) = mpsc::channel(cap);
+    (BoundedTx(tx), BoundedRx(rx))
+}
 
 impl<T, R> Clone for BoundedTx<T, R> {
     fn clone(&self) -> Self {
