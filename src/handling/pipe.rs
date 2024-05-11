@@ -4,7 +4,7 @@ use crate::utils::captures::Captures;
 
 use super::handler::Handler;
 
-/// Forward output from [`from`] to [`to`],
+/// Forward output from `from` to `to`,
 /// or "pipe" output from one handler to another
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Pipe<Src, Dst> {
