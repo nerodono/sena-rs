@@ -3,6 +3,7 @@ name = "sena"
 version = "0.1.0"
 edition = "2021"
 license = "MIT"
+description = "Library for composable event handlers"
 authors = ["Nero <nerodono0@gmail.com>"]
 keywords = ["chain-of-responsibility", "match", "router"]
 
