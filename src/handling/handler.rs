@@ -5,12 +5,14 @@ use crate::{
         comm::{OutputTx, RxChan},
         shutdown::ShutdownRx,
     },
-    utils::captures::Captures,
+    recoverable::Recoverable,
+    utils::{captures::Captures, fn1::Fn1Result},
 };
 
 use super::{
     erased::{ErasedHandler, TypeErasedHandler},
-    map::{Fn1, Map},
+    map::Map,
+    or::Or,
     pipe::Pipe,
     seq::{Seq, SeqHandler},
     server::{ServeOptions, Server},
@@ -39,6 +41,15 @@ pub trait Handler<T, E>: Send + Sync {
         Self: Sized,
     {
         Seq::new(current, self)
+    }
+
+    /// Logical or for handlers
+    fn or<R, EE>(self, rhs: R) -> Or<Self, R>
+    where
+        Self: Sized + Handler<T, Recoverable<T, EE>>,
+        R: Handler<T, EE>,
+    {
+        Or::new(self, rhs)
     }
 
     fn serve<X, OTx, SRx>(
@@ -76,7 +87,7 @@ pub trait Handler<T, E>: Send + Sync {
     fn map<K, F>(self, f: F) -> Map<F, Self>
     where
         Self: Sized,
-        F: Fn1<K, E, SOut = T>,
+        F: Fn1Result<K, E, SOut = T>,
     {
         Map { f, handler: self }
     }

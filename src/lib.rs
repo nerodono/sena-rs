@@ -23,6 +23,7 @@ pub mod csp;
 /// All things related to handling: [`handling::handler::Handler`] definition and default recipes,
 /// like [`handling::pipe::Pipe`], [`handling::seq::Seq`] and so on
 pub mod handling;
+pub mod recoverable;
 
-pub mod request;
+pub mod dependent;
 pub mod utils;

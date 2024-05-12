@@ -1,6 +1,6 @@
 use std::future::Future;
 
-use crate::utils::captures::Captures;
+use crate::utils::{captures::Captures, fn1::Fn1Result};
 
 use super::handler::Handler;
 
@@ -10,17 +10,10 @@ pub struct Map<F, H> {
     pub f: F,
 }
 
-pub trait Fn1<T, E>: Fn(T) -> Result<Self::SOut, E> {
-    type SOut;
-}
-impl<T, O, E, F: Fn(T) -> Result<O, E>> Fn1<T, E> for F {
-    type SOut = O;
-}
-
 impl<F, H, T, E> Handler<T, E> for Map<F, H>
 where
     T: Send,
-    F: Send + Sync + Fn1<T, E>,
+    F: Send + Sync + Fn1Result<T, E>,
     H: Handler<F::SOut, E>,
 {
     type Output = H::Output;
