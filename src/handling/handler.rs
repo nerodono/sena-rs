@@ -41,7 +41,7 @@ pub trait Handler<T, E>: Send + Sync {
         Seq::new(current, self)
     }
 
-    fn server<X, OTx, SRx>(
+    fn serve<X, OTx, SRx>(
         self,
         rx: X,
         options: ServeOptions<OTx, SRx>,
