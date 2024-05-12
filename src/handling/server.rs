@@ -26,6 +26,15 @@ pub struct ServeOptions<OTx, SRx> {
     pub output_tx: OTx,
 }
 
+impl<SRx> ServeOptions<VoidTx, SRx> {
+    pub const fn with_shutdown_token(shutdown_rx: SRx) -> Self {
+        Self {
+            shutdown_rx,
+            output_tx: VoidTx,
+        }
+    }
+}
+
 impl Default for ServeOptions<VoidTx, NoShutdown> {
     fn default() -> Self {
         Self {

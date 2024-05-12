@@ -1,2 +1,7 @@
 # sena-rs
-Experimental event dispatching for Rust
+Composable event handling library for Rust
+
+# Quickstart
+
+For quickstart see [examples](examples/) folder.
+

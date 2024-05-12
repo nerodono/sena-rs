@@ -2,7 +2,7 @@ use std::{future::Future, sync::Arc};
 
 use crate::{
     csp::{
-        comm::{OutputTx, RxChan, TxChan},
+        comm::{OutputTx, RxChan},
         shutdown::ShutdownRx,
     },
     utils::captures::Captures,

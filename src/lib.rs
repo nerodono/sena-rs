@@ -1,3 +1,18 @@
+#[macro_export]
+macro_rules! err_eq {
+    ($e:expr, $tp:ty $(,)?) => {
+        $crate::type_eq!($e, Result<_, $tp>)
+    };
+}
+
+#[macro_export]
+macro_rules! type_eq {
+    ($e:expr, $tp:ty $(,)?) => {{
+        let result: $tp = $e;
+        result
+    }};
+}
+
 /// # Module for CSP communication
 ///
 /// This needs to offload
