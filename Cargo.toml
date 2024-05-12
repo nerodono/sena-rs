@@ -1,7 +1,8 @@
 [package]
 name = "sena"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
+readme = "src/README.md"
 license = "MIT"
 description = "Library for composable event handlers"
 authors = ["Nero <nerodono0@gmail.com>"]
