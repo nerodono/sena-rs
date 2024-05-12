@@ -8,7 +8,7 @@ use crate::{
 use super::Handler;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-/// Special case of `super::map::MapAsync`, with a different interface.
+/// Special case of [`super::map::MapAsync`], with a different interface.
 /// It can be more ergonomic to provide environment as a function argument, not by capturing
 pub struct Provide<Env, F, H> {
     pub env: Env,

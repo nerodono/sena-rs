@@ -1,15 +1,21 @@
-use either::Either;
-
-use crate::{
-    csp::{
-        comm::{OutputTx, Responder, RxChan, VoidTx},
-        message::Message,
-        shutdown::{NoShutdown, ShutdownRx},
-    },
-    utils::poll_biased::PollBiased,
+use crate::csp::{
+    comm::{Responder, RxChan, VoidTx},
+    message::Message,
+    shutdown::NoShutdown,
 };
 
 use super::handler::Handler;
+
+with_rt! {
+    use either::Either;
+    use crate::{
+        csp::{
+            comm::OutputTx,
+            shutdown::ShutdownRx,
+        },
+        utils::poll_biased::PollBiased,
+    };
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Server<H, X> {

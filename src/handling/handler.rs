@@ -1,16 +1,20 @@
 use std::{future::Future, sync::Arc};
 
 use crate::{
-    csp::{
-        comm::{OutputTx, RxChan},
-        shutdown::ShutdownRx,
-    },
+    csp::comm::RxChan,
     recoverable::Recoverable,
     utils::{
         captures::Captures,
         fn_n::{Fn1Result, Fn1ResultAsync},
     },
 };
+
+with_rt! {
+    use crate::{
+        csp::{comm::OutputTx, shutdown::ShutdownRx},
+        handling::server::ServeOptions,
+    };
+}
 
 use super::{
     erased::{ErasedHandler, TypeErasedHandler},
@@ -19,7 +23,7 @@ use super::{
     pipe::Pipe,
     provide::Provide,
     seq::{Seq, SeqHandler},
-    server::{ServeOptions, Server},
+    server::Server,
 };
 
 /// Core of this library
@@ -47,7 +51,7 @@ pub trait Handler<T, E>: Send + Sync {
         Seq::new(current, self)
     }
 
-    /// Logical or for handlers
+    /// Logical or for handlers, refer to [`Or`] for documentation
     fn or<R, EE>(self, rhs: R) -> Or<Self, R>
     where
         Self: Sized + Handler<T, Recoverable<T, EE>>,
@@ -57,6 +61,8 @@ pub trait Handler<T, E>: Send + Sync {
     }
 
     #[cfg(feature = "tokio")]
+    /// Launches [`Server`], same as calling [`Handling::into_server`]
+    /// and [`Server::serve`] method on it
     fn serve<X, OTx, SRx>(
         self,
         rx: X,
@@ -88,6 +94,8 @@ pub trait Handler<T, E>: Send + Sync {
         Server { handler: self, rx }
     }
 
+    /// Special case of [`Handler::map_async`],
+    /// refer to [`Provide`] documentation for more.
     fn provide<Env, F>(self, env: Env, f: F) -> Provide<Env, F, Self>
     where
         Self: Sized,
@@ -118,7 +126,7 @@ pub trait Handler<T, E>: Send + Sync {
         Map { f, handler: self }
     }
 
-    /// See docs for [`Pipe`] module
+    /// Pipes output from one handler to `Dst`, refer to docs of [`Pipe`] for more.
     fn pipe<Dst>(self, dst: Dst) -> Pipe<Self, Dst>
     where
         Self: Sized,
