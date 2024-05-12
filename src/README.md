@@ -38,8 +38,22 @@ Let's break that code into parts:
 3. `.pipe` method on the handler pipes input from left-hand side handler (before the dot) to right-hand side handler (`increment()` in ourcase)
 4. Then, we calling `chain.handle` on resulting handler
 
+There's more handlers for composability, like [`handling::seq::Seq`] handler that allows running "middlewares" (functions with continuations) on the handler
+or [`handling::map::MapAsync`]/[`handling::map::Map`] that allows converting handler's input to another type.
+
+Also take a look at [`csp`] module and at [`handling::server::Server`], this can be used to turn your handler into a server or "actor".
+
+## Dependency injection
+
+`sena` doesn't provide batteries for dependency injection, however, it provides [`handling::Handler::provide`] and [`dependent::Dependent`] for basic dependency injection
+needs, these can be sufficient for great amount of use-cases.
+
 ## Why error type is generic?
 
 It is a good solution, since it allows usage of handler in more flexible way: handler can be used with any error type as long
 as its specific errors can be converted to that type.
+
+## Examples
+
+Take a look at github: <https://github.com/nerodono/sena-rs>
 
