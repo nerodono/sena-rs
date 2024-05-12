@@ -1,3 +1,5 @@
+#![doc = include_str!("README.md")]
+
 /// Specifies type of an error,
 /// same as calling [`type_eq`] with expression and type `Result<_, $tp>`
 #[macro_export]

@@ -2,6 +2,12 @@
 name = "sena"
 version = "0.1.0"
 edition = "2021"
+license = "MIT"
+authors = ["Nero <nerodono0@gmail.com>"]
+keywords = ["chain-of-responsibility", "match", "router"]
+
+repository = "https://github.com/nerodono/sena-rs"
+homepage = "https://github.com/nerodono/sena-rs"
 
 [features]
 default = ["tokio"]

@@ -4,7 +4,7 @@ pub mod captures;
 ///
 /// Useful, since currently rust doesn't allow you to access the return type of [`Fn`]
 /// trait without mentioning it, for example
-/// ```no_run
+/// ```no_compile
 /// impl<F: Fn() -> ???> Something for F {
 ///    type Output = Result<(), F::Output>; // this is not possible
 /// }
