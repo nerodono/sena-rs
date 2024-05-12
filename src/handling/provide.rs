@@ -9,7 +9,10 @@ use super::Handler;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 /// Special case of [`super::map::MapAsync`], with a different interface.
-/// It can be more ergonomic to provide environment as a function argument, not by capturing
+/// Turns [`Handler`] receiving [`Dependent`] into one receiving only arguments, without the dependencies.
+/// Provided function provides the dependencies.
+///
+/// It can be more ergonomic to provide environment as a function argument, not by capturing.
 pub struct Provide<Env, F, H> {
     pub env: Env,
     pub f: F,

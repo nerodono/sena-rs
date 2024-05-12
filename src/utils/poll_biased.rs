@@ -7,6 +7,8 @@ use std::{
 use either::Either;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+/// Polls two futures and returns result of the first completed,
+/// drops the second. Both are required to be [`Unpin`]
 pub struct PollBiased<L, R> {
     pub left: L,
     pub right: R,

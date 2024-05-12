@@ -17,6 +17,7 @@ pub trait SeqHandler<T, E, H>: Send + Sync {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+/// Handler that processes `next` [`Handler`] after `current` [`SeqHandler`] run.
 pub struct Seq<C, N> {
     pub current: C,
     pub next: N,

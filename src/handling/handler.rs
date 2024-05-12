@@ -61,7 +61,7 @@ pub trait Handler<T, E>: Send + Sync {
     }
 
     #[cfg(feature = "tokio")]
-    /// Launches [`Server`], same as calling [`Handling::into_server`]
+    /// Launches [`Server`], same as calling [`Handler::into_server`]
     /// and [`Server::serve`] method on it
     fn serve<X, OTx, SRx>(
         self,

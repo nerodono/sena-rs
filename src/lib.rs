@@ -24,9 +24,7 @@ macro_rules! type_eq {
     };
 }
 
-/// # Module for CSP communication
-///
-/// This needs to offload
+/// # Primitives for CSP-like communication
 pub mod csp;
 
 /// # Handling

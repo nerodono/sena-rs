@@ -3,7 +3,7 @@ use std::marker::PhantomData;
 use std::pin::Pin;
 use std::task::{Context, Poll};
 
-// [`Future`] that never resolves
+/// [`Future`] that never resolves
 pub struct NeverResolve<T> {
     _phantom: PhantomData<T>,
 }
