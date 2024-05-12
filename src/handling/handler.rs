@@ -56,19 +56,21 @@ pub trait Handler<T, E>: Send + Sync {
         Or::new(self, rhs)
     }
 
+    #[cfg(feature = "tokio")]
     fn serve<X, OTx, SRx>(
         self,
         rx: X,
         options: ServeOptions<OTx, SRx>,
     ) -> impl Future<Output = Result<(), E>> + Send
     where
-        T: Send,
-        E: Send,
+        T: Send + 'static,
+        E: Send + 'static,
         Self::Output: Send,
 
-        Self: Sized,
+        Self: Sized + Clone + 'static,
         X: RxChan<T, E, Self::Output>,
-        OTx: OutputTx<Self::Output, E>,
+        X::Responder: Send + 'static,
+        OTx: OutputTx<Self::Output, E> + 'static,
         SRx: ShutdownRx<E>,
     {
         async move {

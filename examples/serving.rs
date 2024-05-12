@@ -33,7 +33,9 @@ async fn main() -> Result<(), Error> {
     let (inc_tx, inc_rx) = comm::bounded::<_, i32>(1);
 
     let join_handle = tokio::spawn(
-        increment::<Error>().serve(inc_rx, ServeOptions::with_shutdown_token(shut_rx)),
+        increment::<Error>()
+            .share()
+            .serve(inc_rx, ServeOptions::with_shutdown_token(shut_rx)),
     );
     let res = sena::err_eq!(inc_tx.send(10).await, Error)?;
 

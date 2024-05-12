@@ -45,14 +45,18 @@ impl Default for ServeOptions<VoidTx, NoShutdown> {
 }
 
 impl<H, X> Server<H, X> {
+    #[cfg(feature = "tokio")]
     pub async fn serve<T, E, OTx, SRx>(
         &mut self,
         mut options: ServeOptions<OTx, SRx>,
     ) -> Result<(), E>
     where
-        OTx: OutputTx<H::Output, E>,
-        H: Handler<T, E>,
+        T: Send + 'static,
+        E: Send + 'static,
+        OTx: OutputTx<H::Output, E> + 'static,
+        H: Handler<T, E> + Clone + 'static,
         X: RxChan<T, E, H::Output>,
+        X::Responder: Send + 'static,
         SRx: ShutdownRx<E>,
     {
         loop {
@@ -61,9 +65,20 @@ impl<H, X> Server<H, X> {
                 Either::Left(_) => return Ok(()),
                 Either::Right(message) => {
                     let message = message?;
-                    if let Some(output) = self.handle_message(message).await? {
-                        options.output_tx.send(output).await?;
-                    }
+
+                    let out_tx = options.output_tx.clone();
+                    let handler = self.handler.clone();
+
+                    tokio::spawn(async move {
+                        let output = handler.handle(message.data).await?;
+                        if let Some(responder) = message.responder {
+                            responder.respond_with(output).await?;
+                        } else {
+                            out_tx.send(output).await?;
+                        }
+
+                        Ok::<_, E>(())
+                    });
                 }
             }
         }
