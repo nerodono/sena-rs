@@ -1,13 +1,19 @@
 use std::{future::Future, sync::Arc};
 
-use crate::{csp::comm::RxChan, utils::captures::Captures};
+use crate::{
+    csp::{
+        comm::{OutputTx, RxChan, TxChan},
+        shutdown::ShutdownRx,
+    },
+    utils::captures::Captures,
+};
 
 use super::{
     erased::{ErasedHandler, TypeErasedHandler},
     map::{Fn1, Map},
     pipe::Pipe,
     seq::{Seq, SeqHandler},
-    server::Server,
+    server::{ServeOptions, Server},
 };
 
 /// Core of this library
@@ -33,6 +39,27 @@ pub trait Handler<T, E>: Send + Sync {
         Self: Sized,
     {
         Seq::new(current, self)
+    }
+
+    fn server<X, OTx, SRx>(
+        self,
+        rx: X,
+        options: ServeOptions<OTx, SRx>,
+    ) -> impl Future<Output = Result<(), E>> + Send
+    where
+        T: Send,
+        E: Send,
+        Self::Output: Send,
+
+        Self: Sized,
+        X: RxChan<T, E, Self::Output>,
+        OTx: OutputTx<Self::Output, E>,
+        SRx: ShutdownRx<E>,
+    {
+        async move {
+            let mut server = self.into_server(rx);
+            server.serve(options).await
+        }
     }
 
     /// Creates server from that handler, for more, see docs for [`Server`] handler

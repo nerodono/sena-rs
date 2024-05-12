@@ -14,12 +14,12 @@ impl<T, E> OutputTx<T, E> for VoidTx {
     }
 }
 
-pub trait Responder<R, E> {
+pub trait Responder<R, E>: Send {
     fn respond_with(self, with: R) -> impl Future<Output = Result<(), E>> + Send;
 }
 
 pub trait OutputTx<T, E>: Send {
-    fn send(&self, data: T) -> impl Future<Output = Result<(), E>> + Captures<&'_ Self>;
+    fn send(&self, data: T) -> impl Future<Output = Result<(), E>> + Send + Captures<&'_ Self>;
 }
 
 pub trait TxChan<T, E, R>: Send + Clone {

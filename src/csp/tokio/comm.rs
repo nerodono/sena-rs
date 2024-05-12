@@ -20,7 +20,7 @@ struct Pkt<T, R> {
 }
 
 pub struct OneshotResponder<R>(Option<oneshot::Sender<Option<R>>>);
-impl<R, E> Responder<R, E> for OneshotResponder<R> {
+impl<R: Send, E> Responder<R, E> for OneshotResponder<R> {
     fn respond_with(mut self, with: R) -> impl Future<Output = Result<(), E>> + Send {
         if let Some(chan) = mem::take(&mut self.0) {
             _ = chan.send(Some(with));
