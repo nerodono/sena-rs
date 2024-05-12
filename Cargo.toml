@@ -10,3 +10,7 @@ tokio = ["dep:tokio"]
 [dependencies]
 either = { version = "1.11.0", default-features = false }
 tokio = { version = "1.37.0", features = ["sync"], optional = true }
+
+[dev-dependencies]
+derive_more = { version = "0.99.17", default-features = false, features = ["from"] }
+tokio = { version = "1.37.0", features = ["macros", "rt", "sync"] }
