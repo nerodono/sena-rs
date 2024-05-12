@@ -6,14 +6,18 @@ use crate::{
         shutdown::ShutdownRx,
     },
     recoverable::Recoverable,
-    utils::{captures::Captures, fn1::Fn1Result},
+    utils::{
+        captures::Captures,
+        fn_n::{Fn1Result, Fn1ResultAsync},
+    },
 };
 
 use super::{
     erased::{ErasedHandler, TypeErasedHandler},
-    map::Map,
+    map::{Map, MapAsync},
     or::Or,
     pipe::Pipe,
+    provide::Provide,
     seq::{Seq, SeqHandler},
     server::{ServeOptions, Server},
 };
@@ -80,6 +84,26 @@ pub trait Handler<T, E>: Send + Sync {
         X: RxChan<T, E, Self::Output>,
     {
         Server { handler: self, rx }
+    }
+
+    fn provide<Env, F>(self, env: Env, f: F) -> Provide<Env, F, Self>
+    where
+        Self: Sized,
+    {
+        Provide {
+            env,
+            f,
+            handler: self,
+        }
+    }
+
+    /// Same as [`Handler::map`], but provided function is async
+    fn map_async<K, F>(self, f: F) -> MapAsync<F, Self>
+    where
+        Self: Sized,
+        F: Fn1ResultAsync<K, E, Ok = T>,
+    {
+        MapAsync { handler: self, f }
     }
 
     /// Changes input of the handler into another type, to do that - it
