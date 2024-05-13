@@ -30,7 +30,7 @@ fn increment<E>() -> impl Handler<i32, E, Output = i32> {
 #[tokio::main(flavor = "current_thread")]
 async fn main() -> Result<(), Error> {
     let (shut_tx, shut_rx) = shutdown::make_pair();
-    let (inc_tx, inc_rx) = comm::bounded::<_, i32>(1);
+    let (inc_tx, inc_rx) = comm::bounded::<_, i32, _>(1);
 
     let join_handle = tokio::spawn(
         increment::<Error>()
@@ -40,7 +40,7 @@ async fn main() -> Result<(), Error> {
     let res = sena::err_eq!(inc_tx.send(10).await, Error)?;
 
     if let Some(response) = res {
-        println!("Got response: {response}");
+        println!("Got response: {}", response.unwrap());
     } else {
         println!("Got no response");
     }

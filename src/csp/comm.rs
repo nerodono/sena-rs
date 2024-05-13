@@ -8,25 +8,28 @@ use crate::utils::captures::Captures;
 pub struct VoidTx;
 
 impl<T, E> OutputTx<T, E> for VoidTx {
-    fn send(&self, data: T) -> impl Future<Output = Result<(), E>> + Captures<&'_ Self> {
+    fn send(&self, data: Result<T, E>) -> impl Future<Output = Result<(), E>> + Captures<&'_ Self> {
         _ = data;
         async move { Ok(()) }
     }
 }
 
 pub trait Responder<R, E>: Send {
-    fn respond_with(self, with: R) -> impl Future<Output = Result<(), E>> + Send;
+    fn respond_with(self, with: Result<R, E>) -> impl Future<Output = Result<(), E>> + Send;
 }
 
 pub trait OutputTx<T, E>: Send + Clone {
-    fn send(&self, data: T) -> impl Future<Output = Result<(), E>> + Send + Captures<&'_ Self>;
+    fn send(
+        &self,
+        data: Result<T, E>,
+    ) -> impl Future<Output = Result<(), E>> + Send + Captures<&'_ Self>;
 }
 
 pub trait TxChan<T, E, R>: Send + Clone {
     fn send<'a>(
         &'a self,
         data: T,
-    ) -> impl Future<Output = Result<Option<R>, E>> + Send + Captures<&'a Self>;
+    ) -> impl Future<Output = Result<Option<Result<R, E>>, E>> + Send + Captures<&'a Self>;
 
     fn send_nowait<'a>(
         &'a self,

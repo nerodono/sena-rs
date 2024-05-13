@@ -76,7 +76,7 @@ impl<H, X> Server<H, X> {
                     let handler = self.handler.clone();
 
                     tokio::spawn(async move {
-                        let output = handler.handle(message.data).await?;
+                        let output = handler.handle(message.data).await;
                         if let Some(responder) = message.responder {
                             responder.respond_with(output).await?;
                         } else {
@@ -93,12 +93,12 @@ impl<H, X> Server<H, X> {
     pub async fn handle_message<T, E>(
         &mut self,
         message: Message<T, X::Responder>,
-    ) -> Result<Option<H::Output>, E>
+    ) -> Result<Option<Result<H::Output, E>>, E>
     where
         H: Handler<T, E>,
         X: RxChan<T, E, H::Output>,
     {
-        let output = self.handler.handle(message.data).await?;
+        let output = self.handler.handle(message.data).await;
 
         if let Some(responder) = message.responder {
             responder.respond_with(output).await?;

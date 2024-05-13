@@ -14,15 +14,17 @@ use crate::{
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct RecvError;
 
-struct Pkt<T, R> {
+struct Pkt<T, R, E> {
     pub data: T,
-    pub respond_tx: Option<oneshot::Sender<Option<R>>>,
+    pub respond_tx: Option<oneshot::Sender<Option<Result<R, E>>>>,
 }
 
-pub struct OneshotResponder<R>(Option<oneshot::Sender<Option<R>>>);
-impl<R: Send, E> Responder<R, E> for OneshotResponder<R> {
-    fn respond_with(mut self, with: R) -> impl Future<Output = Result<(), E>> + Send {
-        if let Some(chan) = mem::take(&mut self.0) {
+pub struct OneshotResponder<R, E> {
+    tx: Option<oneshot::Sender<Option<Result<R, E>>>>,
+}
+impl<R: Send, E: Send> Responder<R, E> for OneshotResponder<R, E> {
+    fn respond_with(mut self, with: Result<R, E>) -> impl Future<Output = Result<(), E>> + Send {
+        if let Some(chan) = mem::take(&mut self.tx) {
             _ = chan.send(Some(with));
         }
 
@@ -30,48 +32,48 @@ impl<R: Send, E> Responder<R, E> for OneshotResponder<R> {
     }
 }
 
-impl<R> Drop for OneshotResponder<R> {
+impl<R, E> Drop for OneshotResponder<R, E> {
     fn drop(&mut self) {
         // If receiver didn't send response through the [`Responder::respond_with`],
         // value will be `Some`
-        if let Some(chan) = mem::take(&mut self.0) {
+        if let Some(chan) = mem::take(&mut self.tx) {
             _ = chan.send(None);
         }
     }
 }
 
-pub struct BoundedTx<T, R>(mpsc::Sender<Pkt<T, R>>);
-pub struct BoundedRx<T, R>(mpsc::Receiver<Pkt<T, R>>);
+pub struct BoundedTx<T, R, E>(mpsc::Sender<Pkt<T, R, E>>);
+pub struct BoundedRx<T, R, E>(mpsc::Receiver<Pkt<T, R, E>>);
 
-pub fn bounded<T, R>(cap: usize) -> (BoundedTx<T, R>, BoundedRx<T, R>) {
+pub fn bounded<T, R, E>(cap: usize) -> (BoundedTx<T, R, E>, BoundedRx<T, R, E>) {
     let (tx, rx) = mpsc::channel(cap);
     (BoundedTx(tx), BoundedRx(rx))
 }
 
-impl<T, R> Clone for BoundedTx<T, R> {
+impl<T, R, E> Clone for BoundedTx<T, R, E> {
     fn clone(&self) -> Self {
         Self(self.0.clone())
     }
 }
 
-impl<T, E> OutputTx<T, E> for mpsc::UnboundedSender<T>
+impl<T, E> OutputTx<T, E> for mpsc::UnboundedSender<Result<T, E>>
 where
     T: Send,
-    E: From<mpsc::error::SendError<T>>,
+    E: From<mpsc::error::SendError<Result<T, E>>> + Send,
 {
-    fn send(&self, data: T) -> impl Future<Output = Result<(), E>> + Captures<&'_ Self> {
+    fn send(&self, data: Result<T, E>) -> impl Future<Output = Result<(), E>> + Captures<&'_ Self> {
         async move {
             mpsc::UnboundedSender::send(self, data)?;
             Ok(())
         }
     }
 }
-impl<T, E> OutputTx<T, E> for mpsc::Sender<T>
+impl<T, E> OutputTx<T, E> for mpsc::Sender<Result<T, E>>
 where
     T: Send,
-    E: From<mpsc::error::SendError<T>>,
+    E: From<mpsc::error::SendError<Result<T, E>>> + Send,
 {
-    fn send(&self, data: T) -> impl Future<Output = Result<(), E>> + Captures<&'_ Self> {
+    fn send(&self, data: Result<T, E>) -> impl Future<Output = Result<(), E>> + Captures<&'_ Self> {
         async move {
             mpsc::Sender::send(self, data).await?;
             Ok(())
@@ -79,13 +81,13 @@ where
     }
 }
 
-impl<T, E, R> RxChan<T, E, R> for BoundedRx<T, R>
+impl<T, E, R> RxChan<T, E, R> for BoundedRx<T, R, E>
 where
     T: Send,
     R: Send,
-    E: From<RecvError>,
+    E: From<RecvError> + Send,
 {
-    type Responder = OneshotResponder<R>;
+    type Responder = OneshotResponder<R, E>;
 
     fn recv(
         &mut self,
@@ -96,26 +98,30 @@ where
                 return Err(RecvError.into());
             };
             let message = if let Some(respond_tx) = pkt.respond_tx {
-                Message::new(pkt.data, OneshotResponder(Some(respond_tx)))
+                Message::new(
+                    pkt.data,
+                    OneshotResponder {
+                        tx: Some(respond_tx),
+                    },
+                )
             } else {
                 Message::without_responder(pkt.data)
             };
-
             Ok(message)
         })
     }
 }
 
-impl<T, E, R> TxChan<T, E, R> for BoundedTx<T, R>
+impl<T, E, R> TxChan<T, E, R> for BoundedTx<T, R, E>
 where
     T: Send,
     R: Send,
-    E: From<mpsc::error::SendError<T>> + From<oneshot::error::RecvError>,
+    E: From<mpsc::error::SendError<T>> + From<oneshot::error::RecvError> + Send,
 {
     fn send<'a>(
         &'a self,
         data: T,
-    ) -> impl Future<Output = Result<Option<R>, E>> + Send + Captures<&'a Self> {
+    ) -> impl Future<Output = Result<Option<Result<R, E>>, E>> + Send + Captures<&'a Self> {
         let (tx, rx) = oneshot::channel();
         async move {
             let result = self
