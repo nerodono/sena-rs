@@ -21,7 +21,6 @@ use super::{
     map::{Map, MapAsync},
     or::Or,
     pipe::Pipe,
-    provide::Provide,
     seq::{Seq, SeqHandler},
     server::Server,
 };
@@ -92,19 +91,6 @@ pub trait Handler<T, E>: Send + Sync {
         X: RxChan<T, E, Self::Output>,
     {
         Server { handler: self, rx }
-    }
-
-    /// Special case of [`Handler::map_async`],
-    /// refer to [`Provide`] documentation for more.
-    fn provide<Env, F>(self, env: Env, f: F) -> Provide<Env, F, Self>
-    where
-        Self: Sized,
-    {
-        Provide {
-            env,
-            f,
-            handler: self,
-        }
     }
 
     /// Same as [`Handler::map`], but provided function is async
