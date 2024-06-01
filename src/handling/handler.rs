@@ -1,29 +1,15 @@
 use std::{future::Future, sync::Arc};
 
-use crate::{
-    csp::comm::RxChan,
-    recoverable::Recoverable,
-    utils::{
-        captures::Captures,
-        fn_n::{Fn1Result, Fn1ResultAsync},
-    },
+use crate::utils::{
+    captures::Captures,
+    fn_n::{Fn1Result, Fn1ResultAsync},
 };
-
-with_rt! {
-    use crate::{
-        csp::{comm::OutputTx, shutdown::ShutdownRx},
-        handling::server::ServeOptions,
-    };
-}
 
 use super::{
     erased::{ErasedHandler, TypeErasedHandler},
     map::{Map, MapAsync},
-    or::Or,
     pipe::Pipe,
-    provide::Provide,
     seq::{Seq, SeqHandler},
-    server::Server,
 };
 
 /// Core of this library
@@ -49,62 +35,6 @@ pub trait Handler<T, E>: Send + Sync {
         Self: Sized,
     {
         Seq::new(current, self)
-    }
-
-    /// Logical or for handlers, refer to [`Or`] for documentation
-    fn or<R, EE>(self, rhs: R) -> Or<Self, R>
-    where
-        Self: Sized + Handler<T, Recoverable<T, EE>>,
-        R: Handler<T, EE>,
-    {
-        Or::new(self, rhs)
-    }
-
-    #[cfg(feature = "tokio")]
-    /// Launches [`Server`], same as calling [`Handler::into_server`]
-    /// and [`Server::serve`] method on it
-    fn serve<X, OTx, SRx>(
-        self,
-        rx: X,
-        options: ServeOptions<OTx, SRx>,
-    ) -> impl Future<Output = Result<(), E>> + Send
-    where
-        T: Send + 'static,
-        E: Send + 'static,
-        Self::Output: Send,
-
-        Self: Sized + Clone + 'static,
-        X: RxChan<T, E, Self::Output>,
-        X::Responder: Send + 'static,
-        OTx: OutputTx<Self::Output, E> + 'static,
-        SRx: ShutdownRx<E>,
-    {
-        async move {
-            let mut server = self.into_server(rx);
-            server.serve(options).await
-        }
-    }
-
-    /// Creates server from that handler, for more, see docs for [`Server`] handler
-    fn into_server<X>(self, rx: X) -> Server<Self, X>
-    where
-        Self: Sized,
-        X: RxChan<T, E, Self::Output>,
-    {
-        Server { handler: self, rx }
-    }
-
-    /// Special case of [`Handler::map_async`],
-    /// refer to [`Provide`] documentation for more.
-    fn provide<Env, F>(self, env: Env, f: F) -> Provide<Env, F, Self>
-    where
-        Self: Sized,
-    {
-        Provide {
-            env,
-            f,
-            handler: self,
-        }
     }
 
     /// Same as [`Handler::map`], but provided function is async

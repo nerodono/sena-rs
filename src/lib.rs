@@ -26,9 +26,6 @@ macro_rules! type_eq {
     };
 }
 
-/// # Primitives for CSP-like communication
-pub mod csp;
-
 /// # Handling
 ///
 /// All things related to composable handling: [`handling::handler::Handler`] definition and default recipes,
@@ -36,9 +33,6 @@ pub mod csp;
 ///
 /// To start, refer to [`handling::handler`] and specifially to [`handling::handler::Handler`].
 pub mod handling;
-
-/// # Errors which can be recovered
-pub mod recoverable;
 
 /// # Request with dependencies
 pub mod dependent;
