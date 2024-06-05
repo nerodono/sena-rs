@@ -7,6 +7,7 @@ use crate::utils::{
 
 use super::{
     erased::{ErasedHandler, TypeErasedHandler},
+    inspect::Inspect,
     map::{Map, MapAsync},
     pipe::Pipe,
     seq::{Seq, SeqHandler},
@@ -35,6 +36,13 @@ pub trait Handler<T, E>: Send + Sync {
         Self: Sized,
     {
         Seq::new(current, self)
+    }
+
+    fn inspect<F>(self, f: F) -> Inspect<F, Self>
+    where
+        Self: Sized,
+    {
+        Inspect::new(f, self)
     }
 
     /// Same as [`Handler::map`], but provided function is async

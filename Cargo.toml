@@ -11,14 +11,7 @@ keywords = ["chains", "events", "handling", "match", "router"]
 repository = "https://github.com/nerodono/sena-rs"
 homepage = "https://github.com/nerodono/sena-rs"
 
-[features]
-default = ["tokio"]
-tokio = ["dep:tokio"]
-
 [dependencies]
-either = { version = "1.11.0", default-features = false }
-tokio = { version = "1.37.0", features = ["sync", "rt"], optional = true }
+sena-macros = { version = "0.1.0", path = "./sena-macros" }
 
 [dev-dependencies]
-derive_more = { version = "0.99.17", default-features = false, features = ["from"] }
-tokio = { version = "1.37.0", features = ["macros", "rt", "sync"] }

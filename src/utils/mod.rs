@@ -23,6 +23,3 @@ pub mod fn_n;
 
 /// # [`std::future::Future`] that never resolves
 pub mod never_resolve;
-
-/// # Select-like future
-pub mod poll_biased;
