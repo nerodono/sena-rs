@@ -90,6 +90,11 @@ fn impl_hlist(
     }
 
     quote! {
+        impl #impl_generics ::#root::pipeline::hlist::HList for #ident #ty_generics #where_clause {
+            fn prepend<K>(self, item: K) -> ::#root::pipeline::hlist::HCons<K, Self> {
+                ::#root::pipeline::hlist::HCons(item, self)
+            }
+        }
         impl #impl_generics From<#ident #ty_generics> for #hlist_ty #where_clause {
             fn from(this: #ident #ty_generics) -> Self {
                 #hlist_val
