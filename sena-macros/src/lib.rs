@@ -1,20 +1,15 @@
-use proc_macro::TokenStream;
+use proc_macro::{Span, TokenStream};
 
-/// Turns your struct into HList
-///
-/// ```
-/// #[hlist]
-/// pub struct Args {
-///     pub id: Id,
-///     pub name: String,
-///
-///     #[tail]
-///     pub security: SecurityPipeline,
-/// }
-/// ```
-/// This struct can be used in places where `HList` is used,
-/// can be turned into `HCons` or `HNil` instances. `#[tail]` attribute is the attribute's tail,
-/// e.g. `Args` can be converted to `HCons<Id, HCons<String, SecurityPipeline>>`.
-pub fn hlist(args: TokenStream, body: TokenStream) -> TokenStream {
-    todo!()
+const CRATE_NAME: &str = "sena";
+
+pub(crate) fn crate_ident() -> syn::Ident {
+    syn::Ident::new(CRATE_NAME, Span::mixed_site().into())
 }
+
+/// Turns your struct into something that acts like `HList`
+#[proc_macro_derive(HList, attributes(tail))]
+pub fn derive_hlist(item: TokenStream) -> TokenStream {
+    impls::hlist::derive(item)
+}
+
+mod impls;

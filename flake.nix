@@ -38,6 +38,9 @@
       in
       {
         devShells.default = pkgs.mkShell (options // {
+          shellHook = ''
+            export PS1="(sena) $PS1"
+          '';
           buildInputs = [
             pkgs.just
             (rust.override {

@@ -15,7 +15,7 @@ macro_rules! type_eq {
     };
 }
 
-pub use sena_macros::hlist;
+pub use sena_macros::HList;
 
 pub mod pipeline;
 
